@@ -48,5 +48,95 @@
     function locateUser(){const status=document.querySelector('#gpsStatus');if(!activeBeach)return;if(!navigator.geolocation){status.textContent='이 브라우저에서는 GPS를 지원하지 않아요.';return}status.textContent='현재 위치를 확인하고 지도를 준비하고 있어요…';navigator.geolocation.getCurrentPosition(position=>{const {latitude,longitude,accuracy}=position.coords;const distance=distanceKm(latitude,longitude,activeBeach.coords[0],activeBeach.coords[1]);status.textContent=`현재 위치에서 ${activeBeach.name}까지의 직선 거리입니다 · 정확도 ±${Math.round(accuracy)}m`;renderGpsMap(latitude,longitude,distance,accuracy)},error=>{const messages={1:'위치 권한이 거부됐어요. 브라우저 설정에서 허용해주세요.',2:'현재 위치를 확인할 수 없어요.',3:'위치 확인 시간이 초과됐어요.'};status.textContent=messages[error.code]||'GPS 위치 확인에 실패했어요.';},{enableHighAccuracy:true,timeout:10000,maximumAge:60000})}
     document.querySelectorAll('.filter').forEach(btn=>btn.onclick=()=>{document.querySelector('.filter.selected').classList.remove('selected');btn.classList.add('selected');currentFilter=btn.dataset.filter;render()});document.querySelector('#searchBtn').onclick=()=>{query=document.querySelector('#searchInput').value.trim();render()};document.querySelector('#searchInput').onkeydown=e=>{if(e.key==='Enter'){query=e.target.value.trim();render()}};document.querySelector('#nearBtn').onclick=()=>{document.querySelector('#searchInput').value='부산';query='부산';render();document.querySelector('#beaches').scrollIntoView({behavior:'smooth'})};document.querySelector('#closeModal').onclick=()=>document.querySelector('#modalBackdrop').classList.remove('open');document.querySelector('#modalBackdrop').onclick=e=>{if(e.target.id==='modalBackdrop')e.currentTarget.classList.remove('open')};document.querySelector('#reportBtn').onclick=()=>{document.querySelector('#reportBeach').value=activeBeach?.name||'';document.querySelector('#reportFacility').value=document.querySelector('.facility-item[style] strong')?.textContent||'편의시설';document.querySelector('#reportLocation').value='';document.querySelector('#reportNote').value='';document.querySelector('#modalBackdrop').classList.remove('open');document.querySelector('#reportBackdrop').classList.add('open')};document.querySelector('#closeReport').onclick=()=>document.querySelector('#reportBackdrop').classList.remove('open');document.querySelector('#reportBackdrop').onclick=e=>{if(e.target.id==='reportBackdrop')e.currentTarget.classList.remove('open')};document.querySelector('#reportForm').onsubmit=e=>{e.preventDefault();const beach=document.querySelector('#reportBeach').value,facility=document.querySelector('#reportFacility').value,locationText=document.querySelector('#reportLocation').value,note=document.querySelector('#reportNote').value;const title=encodeURIComponent(`[시설 위치 제보] ${beach} - ${facility}`);const body=encodeURIComponent(`해수욕장: ${beach}\n시설: ${facility}\n위치 설명: ${locationText}\n추가 메모: ${note}`);window.open(`https://github.com/jbk10/tube-parasol-rental/issues/new?title=${title}&body=${body}`,'_blank','noopener');document.querySelector('#reportBackdrop').classList.remove('open')};async function share(){try{await navigator.clipboard.writeText(location.href);alert('공유 링크를 복사했어요.')}catch(e){alert('페이지 주소를 복사해 친구에게 보내보세요.')}}document.querySelector('#shareTop').onclick=share;document.querySelector('#shareModal').onclick=share;document.querySelector('#weatherBtn').onclick=()=>alert('기상청 해양날씨 서비스에서 최신 정보를 확인해보세요.');render();
   </script>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase Console > Project settings > Your apps에서 값을 붙여넣으세요.
+    const firebaseConfig = {
+      apiKey: 'PASTE_FIREBASE_API_KEY',
+      authDomain: 'sparta-myhoneytip-gun-939ac.firebaseapp.com',
+      projectId: 'sparta-myhoneytip-gun-939ac',
+      storageBucket: 'sparta-myhoneytip-gun-939ac.firebasestorage.app',
+      messagingSenderId: 'PASTE_FIREBASE_MESSAGING_SENDER_ID',
+      appId: '1:21229250711:web:bee3dd569d35e6cea7a1d2'
+    };
+    const firebaseReady = firebaseConfig.apiKey.startsWith('AIza') && firebaseConfig.messagingSenderId.startsWith('2');
+    const reportsDb = firebaseReady ? (firebase.initializeApp(firebaseConfig), firebase.firestore()) : null;
+    const reportForm = document.querySelector('#reportForm');
+    if (reportForm) {
+      const locationLabel = document.createElement('div');
+      locationLabel.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px';
+      locationLabel.innerHTML = '<label>위도<input id="reportLat" type="number" step="any" placeholder="선택"></label><label>경도<input id="reportLng" type="number" step="any" placeholder="선택"></label>';
+      document.querySelector('#reportLocation').closest('label').after(locationLabel);
+      const locationButton = document.createElement('button');
+      locationButton.type = 'button'; locationButton.className = 'report-submit'; locationButton.textContent = '현재 위치 사용';
+      reportForm.insertBefore(locationButton, document.querySelector('#reportNote').closest('label'));
+      locationButton.onclick = () => navigator.geolocation?.getCurrentPosition(({coords}) => { document.querySelector('#reportLat').value = coords.latitude.toFixed(6); document.querySelector('#reportLng').value = coords.longitude.toFixed(6); }, () => alert('위치 권한을 허용해 주세요.'));
+      reportForm.onsubmit = async (event) => {
+        event.preventDefault();
+        if (!reportsDb) { alert('Firebase SDK 설정값을 먼저 입력해 주세요.'); return; }
+        const value = id => document.querySelector(id)?.value.trim() || '';
+        const payload = { beach: value('#reportBeach'), facility: value('#reportFacility'), locationDescription: value('#reportLocation'), note: value('#reportNote'), lat: Number(value('#reportLat')) || null, lng: Number(value('#reportLng')) || null, source: 'web', createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+        try { await reportsDb.collection('facilityReports').add(payload); alert('위치 정보가 저장되었습니다.'); reportForm.reset(); document.querySelector('#reportBackdrop').classList.remove('open'); }
+        catch (error) { console.error(error); alert('저장에 실패했습니다. Firestore 규칙을 확인해 주세요.'); }
+      };
+    }
+  </script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <style>
+    .beach-map{height:280px;margin:16px 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#dff4f6}.map-note{font-size:11px;color:var(--muted);margin:-8px 0 12px}.admin-panel{display:none;margin:18px 0;padding:15px;background:#fff;border-radius:14px;border:1px solid var(--line)}.admin-panel.visible{display:block}.admin-report{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding:12px 0;font-size:12px}.admin-report button{background:var(--coral);color:#fff;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:800}
+  </style>
+  <div class="admin-panel" id="adminPanel"><strong>제보 승인 관리</strong><div id="adminReports"></div></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    (() => {
+      let detailMap = null;
+      const modal = document.querySelector('#modalBackdrop');
+      const modalBox = modal?.querySelector('.modal');
+      if (!modalBox) return;
+      const map = document.createElement('div'); map.id = 'detailMap'; map.className = 'beach-map';
+      const mapNote = document.createElement('p'); mapNote.id = 'mapNote'; mapNote.className = 'map-note';
+      document.querySelector('#modalRows')?.after(map, mapNote);
+      const iconMap = {'화장실':'🚻','세족장':'🚿','샤워장':'🚿','에어건':'💨','파라솔 대여대':'⛱️','주차장':'🅿️','쓰레기통':'🗑️','해파리 출몰지역':'⚠️'};
+      const key = id => document.querySelector(id)?.value?.trim() || '';
+      function pointsFor(beach, type) {
+        const exact = beach.facilityPoints?.[type] || [];
+        if (exact.length) return exact;
+        return [];
+      }
+      function drawMap(beach, selected='') {
+        if (!window.L || !beach?.coords) return;
+        if (detailMap) detailMap.remove();
+        detailMap = L.map(map,{zoomControl:false}).setView(beach.coords,16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(detailMap);
+        L.control.zoom({position:'bottomright'}).addTo(detailMap);
+        const all = beach.amenities.flatMap(type => pointsFor(beach,type).map(point => ({...point,type})));
+        L.marker(beach.coords).addTo(detailMap).bindPopup(`<strong>${beach.name}</strong><br>해수욕장 중심 위치`);
+        all.forEach(point => L.marker([point.lat,point.lng]).addTo(detailMap).bindPopup(`<strong>${iconMap[point.type] || '📍'} ${point.type}</strong><br>${point.name}<br>${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`));
+        mapNote.textContent = all.length ? '정확한 좌표가 등록된 시설만 지도에 표시됩니다.' : '정확한 시설 위치가 없는 항목은 사용자 제보 승인 후 지도에 표시됩니다.';
+        setTimeout(() => detailMap?.invalidateSize(),120);
+      }
+      const observer = new MutationObserver(() => { if (modal.classList.contains('open') && activeBeach) setTimeout(() => drawMap(activeBeach),80); });
+      observer.observe(modal,{attributes:true,attributeFilter:['class']});
+      document.addEventListener('click', event => { const item = event.target.closest('.facility-item'); if (item && activeBeach) { const type = item.querySelector('strong')?.textContent || ''; setTimeout(() => drawMap(activeBeach,type),80); } });
+
+      function readReports() { try { return JSON.parse(localStorage.getItem('facilityReports') || '[]'); } catch { return []; } }
+      function saveLocalReport(report) { const list = readReports(); list.unshift({...report,id:crypto.randomUUID?.() || String(Date.now()),status:'pending'}); localStorage.setItem('facilityReports',JSON.stringify(list)); }
+      const form = document.querySelector('#reportForm');
+      if (form) {
+        const location = document.querySelector('#reportLocation');
+        const fields = document.createElement('div'); fields.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px'; fields.innerHTML='<label>위도<input id="reportLat" type="number" step="any" placeholder="선택"></label><label>경도<input id="reportLng" type="number" step="any" placeholder="선택"></label>'; location.closest('label')?.after(fields);
+        const gps = document.createElement('button'); gps.type='button'; gps.className='report-submit'; gps.textContent='현재 위치 사용'; form.insertBefore(gps,document.querySelector('#reportNote')?.closest('label') || form.lastElementChild);
+        gps.onclick=()=>navigator.geolocation?.getCurrentPosition(({coords})=>{document.querySelector('#reportLat').value=coords.latitude.toFixed(6);document.querySelector('#reportLng').value=coords.longitude.toFixed(6)},()=>alert('위치 권한을 허용해 주세요.'));
+        form.onsubmit=async event=>{ event.preventDefault(); const report={beach:key('#reportBeach'),facility:key('#reportFacility'),locationDescription:key('#reportLocation'),note:key('#reportNote'),lat:Number(key('#reportLat'))||null,lng:Number(key('#reportLng'))||null,createdAt:new Date().toISOString()}; try { if (reportsDb) await reportsDb.collection('facilityReports').add({...report,status:'pending'}); else saveLocalReport(report); alert(reportsDb?'제보가 승인 대기 상태로 저장되었습니다.':'제보가 임시 저장되었습니다. Firebase 설정 후 여러 사용자에게 공유됩니다.'); form.reset(); document.querySelector('#reportBackdrop').classList.remove('open'); } catch(error){ console.error(error); alert('제보 저장에 실패했습니다. Firestore 규칙을 확인해 주세요.'); } };
+      }
+      const adminPanel=document.querySelector('#adminPanel'), adminReports=document.querySelector('#adminReports');
+      if (new URLSearchParams(location.search).get('admin') === '1') {
+        adminPanel.classList.add('visible');
+        async function loadReports(){ let list=readReports(); if(reportsDb){ const snap=await reportsDb.collection('facilityReports').where('status','==','pending').get(); list=snap.docs.map(doc=>({id:doc.id,...doc.data()})); } adminReports.innerHTML=list.length?list.map(r=>`<div class="admin-report"><span>${r.beach} · ${r.facility}<br>${r.locationDescription || '좌표 제보'} </span><button data-id="${r.id}">승인</button></div>`).join(''):'<p class="location">대기 중인 제보가 없습니다.</p>'; adminReports.querySelectorAll('button').forEach(btn=>btn.onclick=async()=>{ const id=btn.dataset.id; if(reportsDb) await reportsDb.collection('facilityReports').doc(id).update({status:'approved',approvedAt:firebase.firestore.FieldValue.serverTimestamp()}); else { const next=readReports().map(r=>r.id===id?{...r,status:'approved'}:r); localStorage.setItem('facilityReports',JSON.stringify(next)); } loadReports(); }); }
+        loadReports();
+      }
+    })();
+  </script>
 </body>
 </html>
