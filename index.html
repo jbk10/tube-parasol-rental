@@ -402,6 +402,7 @@
       const mapDistanceKm = (lat1,lng1,lat2,lng2) => { const rad=Math.PI/180,dLat=(lat2-lat1)*rad,dLng=(lng2-lng1)*rad,a=Math.sin(dLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)**2; return 6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); };
       const updateTravelTime = (type, text) => { const item = [...document.querySelectorAll('#facilityList .facility-item')].find(row => row.querySelector('strong')?.textContent === type); if (!item) return; let message = item.querySelector('.facility-travel-time'); if (!message) { message = document.createElement('span'); message.className='facility-travel-time'; item.querySelector('div:nth-child(2)')?.append(message); } message.textContent = text; };
       const showTravelTime = (type, point) => { updateTravelTime(type,'현재 위치에서의 거리와 시간을 확인하고 있어요.'); if (!navigator.geolocation) { updateTravelTime(type,'이 기기에서는 현재 위치를 사용할 수 없어요.'); return; } navigator.geolocation.getCurrentPosition(({coords}) => { const km = mapDistanceKm(coords.latitude,coords.longitude,point.lat,point.lng); const distance = km < 1 ? `${Math.round(km*1000)}m` : `${km.toFixed(1)}km`; const minutes = Math.max(1,Math.round(km*1.25/4.5*60)); updateTravelTime(type,`내 위치에서 약 ${minutes}분 · ${distance} (도보 추정)`); }, () => updateTravelTime(type,'위치 권한을 허용하면 거리와 예상 시간을 볼 수 있어요.'), {enableHighAccuracy:true,timeout:10000,maximumAge:60000}); };
+      const showMapTravelTime = (marker, type, point) => { const popup = message => `<strong>${facilityIcons[type] || '📍'} ${type}</strong><br>${point.name}<br><b style="display:block;margin-top:6px;color:#087887">${message}</b>`; marker.setPopupContent(popup('현재 위치에서의 시간 확인 중…')).openPopup(); if (!navigator.geolocation) { marker.setPopupContent(popup('이 기기에서는 현재 위치를 사용할 수 없어요.')).openPopup(); return; } navigator.geolocation.getCurrentPosition(({coords}) => { const km = mapDistanceKm(coords.latitude,coords.longitude,point.lat,point.lng); const distance = km < 1 ? `${Math.round(km*1000)}m` : `${km.toFixed(1)}km`; const minutes = Math.max(1,Math.round(km*1.25/4.5*60)); marker.setPopupContent(popup(`내 위치에서 약 ${minutes}분 · ${distance}<br><small style="color:#6d878e;font-weight:400">도보 추정 시간</small>`)).openPopup(); }, () => marker.setPopupContent(popup('위치 권한을 허용하면 예상 시간을 볼 수 있어요.')).openPopup(), {enableHighAccuracy:true,timeout:10000,maximumAge:60000}); };
       const facilityIcons = {'화장실':'🚻','세족장':'🦶','샤워장':'🚿','주차장':'🅿️','파라솔 대여대':'⛱️','에어건':'💨','쓰레기통':'🗑️','해파리 출몰지역':'🪼','구조대':'🛟','응급의료소':'⛑️'};
       const categories = ['전체','화장실','세족장','샤워장','주차장','파라솔 대여대','에어건','쓰레기통','해파리 출몰지역'];
       const beachArt = ['🏝️','🌉','🌊','⛱️','🌅','🫧','🌇'];
@@ -426,7 +427,7 @@
             points.forEach(point => {
               const icon = L.divIcon({className:'map-facility-pin',html:`<span>${facilityIcons[type] || '📍'}</span>`,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-18]});
               const facility = L.marker([point.lat,point.lng],{icon}).addTo(map).bindPopup(`<strong>${type}</strong><br>${point.name}<br><small>아이콘을 누르면 상세 정보를 볼 수 있어요.</small>`);
-              facility.on('click', () => { openModal(beach,type); showTravelTime(type,point); }); layers.push(facility);
+              facility.on('click', () => showMapTravelTime(facility,type,point)); layers.push(facility);
             });
           });
         });
