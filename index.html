@@ -47,6 +47,21 @@
     .more-beaches{display:none}
     @media(max-width:520px){.grid.mobile-collapsed .card:nth-child(n+4){display:none}.more-beaches{display:block;width:100%;margin:16px 0 30px;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--navy);font-weight:900}}
   </style>
+  <style>
+    :root{--navy:#075d6b;--ink:#123f4a;--muted:#63818a;--line:#d7ebea;--sand:#fffaf0;--aqua:#bdecef;--mint:#e9f8f2;--coral:#ff7a59;--yellow:#ffd979;--white:#fff;--shadow:0 14px 34px rgba(18,91,103,.10)}
+    body{background:linear-gradient(180deg,#f4fcfc 0,#fffaf0 38%,#fffdf8 100%)}
+    header{height:76px;background:rgba(255,253,247,.86);border-bottom:1px solid rgba(167,220,218,.75);box-shadow:0 3px 18px rgba(15,89,101,.04)}
+    .logo{font-size:23px}.logo-mark{width:34px;height:34px;border-radius:13px 13px 13px 5px;background:linear-gradient(145deg,#ff9970,#ff6f58);box-shadow:0 6px 12px rgba(255,122,89,.25)}
+    .nav{color:#6c858c}.nav a.active{color:var(--navy)}.header-btn{background:var(--navy);box-shadow:0 6px 14px rgba(7,93,107,.2)}
+    .hero{padding:74px 0 62px;background:radial-gradient(circle at 83% 22%,rgba(255,255,255,.95) 0 7%,transparent 7.2%),radial-gradient(circle at 78% 74%,rgba(255,217,121,.55) 0 12%,transparent 12.2%),linear-gradient(135deg,#a8e5e4 0%,#cdf2ed 48%,#fff4d7 100%)}
+    .hero:before{content:"";position:absolute;inset:auto -5% -52px auto;width:620px;height:190px;border-radius:50% 50% 0 0;background:rgba(255,255,255,.43);transform:rotate(-7deg)}.hero:after{width:580px;height:210px;right:-120px;bottom:-145px;background:rgba(255,255,255,.6)}
+    .eyebrow{color:#0b8490}.hero h1{font-weight:900}.hero h1 span{color:#f06c55}.hero p{color:#336672}.search{max-width:630px;padding:8px;border:1px solid rgba(255,255,255,.85);border-radius:18px;box-shadow:0 15px 35px rgba(16,104,112,.15)}.search button{background:linear-gradient(135deg,#ff8962,#ff6f58);box-shadow:0 5px 10px rgba(255,122,89,.22)}
+    .content{padding-top:48px}.section-top h2{font-size:26px}.near{color:#16818a}.filter{background:rgba(255,255,255,.8);border-color:#e1eeee;color:#5e7b83}.filter:hover{border-color:#9bd9d8;color:var(--navy)}.filter.selected{background:var(--navy);box-shadow:0 6px 12px rgba(7,93,107,.16)}
+    .grid{gap:21px}.card{border:1px solid rgba(215,235,234,.9);border-radius:22px;box-shadow:0 9px 24px rgba(17,94,103,.08)}.card:hover{transform:translateY(-5px);box-shadow:0 20px 38px rgba(17,94,103,.15)}.thumb{height:172px;padding:16px}.thumb:before{background:linear-gradient(180deg,rgba(9,75,86,.02),rgba(9,75,86,.42))}.tag{background:rgba(255,255,255,.94);border-radius:99px;padding:7px 10px;color:var(--navy);box-shadow:0 3px 10px rgba(0,0,0,.08)}.heart{width:34px;height:34px;color:#f46d5d;box-shadow:0 3px 10px rgba(0,0,0,.1)}.card-body{padding:19px}.card h3{font-size:19px}.amenity{background:#eef9f6;color:#347378}.amenity-button{border-color:#d5ece8;background:#fbfffd;color:#2d7176}.amenity-button:hover{background:#d8f3ee}.card-foot{border-color:#edf3f0}.status{color:#109b7b}
+    .more-beaches{border-color:#bde4df!important;background:#fffefa!important;color:var(--navy)!important;box-shadow:0 6px 16px rgba(18,91,103,.07)}
+    .tip{margin-top:58px;border-radius:25px;background:linear-gradient(135deg,#075d6b,#087c88);box-shadow:0 15px 35px rgba(7,93,107,.2)}.tip small{color:#ffe19a}.tip button{background:#ffe49a;color:#27565c;border-radius:12px}.modal{border:1px solid rgba(255,255,255,.75);box-shadow:0 25px 70px rgba(7,65,75,.25)}
+    @media(max-width:520px){header{height:68px}.logo{font-size:20px}.logo-mark{width:30px;height:30px}.hero{padding:52px 0 44px}.hero h1{font-size:39px}.content{padding-top:36px}.grid{gap:16px}.card{border-radius:19px}.thumb{height:180px}.section-top h2{font-size:23px}.filters{gap:7px}.filter{padding:9px 12px}.more-beaches{margin:18px 0 28px!important}}
+  </style>
 </head>
 <body>
   <header><div class="wrap header-inner"><button class="logo" id="homeLogo" type="button" aria-label="바다여행 첫 화면으로 새로고침"><span class="logo-mark">✦</span>바다여행</button><nav class="nav"><a class="active" href="#beaches">해수욕장 찾기</a><a href="#guide">이용 가이드</a><a href="#about">서비스 소개</a><button class="header-btn" id="shareTop">친구에게 공유</button></nav></div></header>
