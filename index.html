@@ -44,6 +44,11 @@
     .leaflet-marker-icon.beach-marker span{width:36px!important;height:36px!important;border:3px solid #fff!important;border-radius:50%!important;background:#0d91a6!important;box-shadow:0 3px 12px rgba(16,40,58,.4)!important;font-size:18px!important}
   </style>
   <style>
+    #mainBeachMap .leaflet-bottom.leaflet-left{left:max(16px,calc(50% - 380px));bottom:188px}
+    .beach-map-app.nav-collapsed #mainBeachMap .leaflet-bottom.leaflet-left{bottom:132px}
+    @media(max-width:820px){#mainBeachMap .leaflet-bottom.leaflet-left{left:16px;bottom:184px}.beach-map-app.nav-collapsed #mainBeachMap .leaflet-bottom.leaflet-left{bottom:124px}}
+  </style>
+  <style>
     .more-beaches{display:none}
     @media(max-width:520px){.grid.mobile-collapsed .card:nth-child(n+4){display:none}.more-beaches{display:block;width:100%;margin:16px 0 30px;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--navy);font-weight:900}}
   </style>
@@ -440,7 +445,7 @@
       };
       const selectBeach = beach => { selectedBeach = beach; document.querySelector('#mapBeachName').textContent = beach.name; map.flyTo(beach.coords,15,{duration:.7}); drawMap(); };
       const focusBeach = beach => { selectedType='전체'; chips.querySelectorAll('.map-chip').forEach(chip => chip.classList.toggle('active',chip.dataset.type==='전체')); selectBeach(beach); document.querySelector('#exploreSheet').classList.remove('open'); document.querySelectorAll('.map-nav button').forEach(button => button.classList.toggle('active',button.dataset.view==='map')); setTimeout(() => map.invalidateSize(),120); };
-      const initialize = () => { map = L.map('mainBeachMap',{zoomControl:false,attributionControl:true}).setView([35.5,127.8],7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map); L.control.zoom({position:'bottomright'}).addTo(map); drawMap(); };
+      const initialize = () => { map = L.map('mainBeachMap',{zoomControl:false,attributionControl:true}).setView([35.5,127.8],7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map); L.control.zoom({position:'bottomleft'}).addTo(map); drawMap(); };
       initialize();
       chips.addEventListener('click', event => { const chip = event.target.closest('.map-chip'); if (!chip) return; selectedType = chip.dataset.type; chips.querySelectorAll('.map-chip').forEach(item => item.classList.toggle('active',item === chip)); drawMap(); });
       document.querySelector('#mapSearchForm').onsubmit = event => { event.preventDefault(); const term = normalizeSearch(document.querySelector('#mapSearch').value.trim()); const match = beaches.find(beach => matchesSearch(beach,term)); if (match) selectBeach(match); else alert('관련 해수욕장을 찾지 못했어요.'); };
