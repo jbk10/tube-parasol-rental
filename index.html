@@ -291,5 +291,77 @@
       };
     })();
   </script>
+  <style>
+    .facility-item-icon{cursor:pointer;border-radius:9px;padding:3px;transition:transform .18s,background .18s}.facility-item-icon:hover{background:var(--aqua);transform:scale(1.08)}.facility-walk-time{display:block!important;margin-top:4px;color:#0a788e!important;font-size:10px!important;font-weight:900}.location-notice{position:fixed;right:18px;bottom:18px;z-index:30;max-width:320px;padding:15px 16px;background:var(--navy);color:#fff;border-radius:15px;box-shadow:0 12px 32px rgba(7,59,76,.3);font-size:12px;line-height:1.5}.location-notice strong{display:block;font-size:14px;margin-bottom:4px}.location-notice button{margin-top:10px;background:var(--aqua);color:var(--navy);border-radius:9px;padding:8px 11px;font-weight:900;font-size:12px}.location-notice .notice-close{background:transparent;color:#cfe5ea;margin-left:6px}@media(max-width:520px){.location-notice{left:18px;right:18px;max-width:none}}
+  </style>
+  <script>
+    (() => {
+      let visitorPosition = null;
+
+      const getVisitorPosition = () => new Promise((resolve, reject) => {
+        if (visitorPosition) return resolve(visitorPosition);
+        if (!navigator.geolocation) return reject(new Error('unsupported'));
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            visitorPosition = { lat: coords.latitude, lng: coords.longitude };
+            resolve(visitorPosition);
+          },
+          reject,
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+      });
+
+      const distanceBetween = (lat1, lng1, lat2, lng2) => {
+        const rad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+        return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      };
+
+      const showWalkTime = async item => {
+        const type = item.querySelector('strong')?.textContent || '';
+        const points = activeBeach?.facilityPoints?.[type] || [];
+        let message = item.querySelector('.facility-walk-time');
+        if (!message) {
+          message = document.createElement('span');
+          message.className = 'facility-walk-time';
+          item.querySelector('div:nth-child(2)')?.append(message);
+        }
+        if (!points.length) {
+          message.textContent = '정확한 좌표가 등록되면 내 위치와의 시간을 안내해요.';
+          return;
+        }
+        message.textContent = '현재 위치를 확인하고 있어요…';
+        try {
+          const here = await getVisitorPosition();
+          const nearest = points.map(point => ({ point, km: distanceBetween(here.lat, here.lng, point.lat, point.lng) })).sort((a, b) => a.km - b.km)[0];
+          const minutes = Math.max(1, Math.round((nearest.km * 1.25 / 4.5) * 60));
+          const distance = nearest.km < 1 ? `${Math.round(nearest.km * 1000)}m` : `${nearest.km.toFixed(1)}km`;
+          message.textContent = `내 위치에서 약 ${minutes}분 · ${distance} (도보 추정)`;
+        } catch (error) {
+          message.textContent = '위치 권한을 허용하면 예상 도보 시간을 볼 수 있어요.';
+        }
+      };
+
+      document.addEventListener('click', event => {
+        const icon = event.target.closest('.facility-item-icon');
+        if (icon) showWalkTime(icon.closest('.facility-item'));
+      });
+
+      window.addEventListener('load', () => {
+        if (sessionStorage.getItem('locationNoticeShown')) return;
+        sessionStorage.setItem('locationNoticeShown', 'true');
+        const notice = document.createElement('aside');
+        notice.className = 'location-notice';
+        notice.innerHTML = '<strong>📍 위치 설정 안내</strong>시설 아이콘을 누르면 내 위치에서의 예상 도보 시간을 확인할 수 있어요.<br><button type="button">위치 설정하기</button><button class="notice-close" type="button">나중에</button>';
+        document.body.append(notice);
+        notice.querySelector('button:not(.notice-close)').onclick = async () => {
+          try { await getVisitorPosition(); notice.remove(); }
+          catch { alert('브라우저의 위치 권한을 허용해 주세요.'); }
+        };
+        notice.querySelector('.notice-close').onclick = () => notice.remove();
+      });
+    })();
+  </script>
 </body>
 </html>
