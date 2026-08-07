@@ -407,7 +407,7 @@
       const renderExplore = term => { const normalized = normalizeSearch(term || ''); const list = beaches.filter(beach => matchesSearch(beach, normalized)); exploreGrid.innerHTML = list.length ? list.map(beach => `<article class="explore-card" data-beach="${beaches.indexOf(beach)}"><div class="explore-card-head"><div><h3>${beach.name}</h3><p>${beach.region}</p></div><button class="explore-open" type="button">지도 보기</button></div><div class="explore-facilities">${beach.amenities.map(type => `<button class="explore-facility" type="button" data-type="${type}">${facilityIcons[type] || beach.facilities[type]?.[0] || '📍'} ${type}</button>`).join('')}</div></article>`).join('') : '<div class="explore-empty">관련 해수욕장을 찾지 못했어요.</div>'; };
       renderExplore();
       document.querySelector('#exploreSearch').oninput = event => renderExplore(event.target.value);
-      exploreGrid.onclick = event => { const card = event.target.closest('.explore-card'); if (!card) return; const beach = beaches[card.dataset.beach]; const facility = event.target.closest('.explore-facility'); if (facility) { const type = facility.dataset.type, point = beach.facilityPoints?.[type]?.[0]; selectBeach(beach); document.querySelector('#exploreSheet').classList.remove('open'); openModal(beach,type); if (point) showTravelTime(type,point); return; } selectBeach(beach); document.querySelector('#exploreSheet').classList.remove('open'); };
+      exploreGrid.onclick = event => { const card = event.target.closest('.explore-card'); if (!card) return; const beach = beaches[card.dataset.beach]; const facility = event.target.closest('.explore-facility'); if (facility) { const type = facility.dataset.type, point = beach.facilityPoints?.[type]?.[0]; focusBeach(beach); openModal(beach,type); if (point) showTravelTime(type,point); return; } focusBeach(beach); };
       const beachIcon = L.divIcon({className:'map-beach-pin',html:'<span>🏖️</span>',iconSize:[36,36],iconAnchor:[18,18]});
       const clearLayers = () => { layers.forEach(layer => map.removeLayer(layer)); layers = []; };
       const drawMap = () => {
@@ -428,6 +428,7 @@
         });
       };
       const selectBeach = beach => { selectedBeach = beach; document.querySelector('#mapBeachName').textContent = beach.name; map.flyTo(beach.coords,15,{duration:.7}); drawMap(); };
+      const focusBeach = beach => { selectedType='전체'; chips.querySelectorAll('.map-chip').forEach(chip => chip.classList.toggle('active',chip.dataset.type==='전체')); selectBeach(beach); document.querySelector('#exploreSheet').classList.remove('open'); document.querySelectorAll('.map-nav button').forEach(button => button.classList.toggle('active',button.dataset.view==='map')); setTimeout(() => map.invalidateSize(),120); };
       const initialize = () => { map = L.map('mainBeachMap',{zoomControl:false,attributionControl:true}).setView([35.5,127.8],7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map); L.control.zoom({position:'bottomright'}).addTo(map); drawMap(); };
       initialize();
       chips.addEventListener('click', event => { const chip = event.target.closest('.map-chip'); if (!chip) return; selectedType = chip.dataset.type; chips.querySelectorAll('.map-chip').forEach(item => item.classList.toggle('active',item === chip)); drawMap(); });
